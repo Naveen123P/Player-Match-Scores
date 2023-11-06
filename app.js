@@ -15,7 +15,7 @@ const initilizeDBAndServer = async () => {
       driver: sqlite3.Database,
     });
     app.listen(3000, () => {
-      console.log("Server is running at http://localhost/:3000/");
+      console.log("Server is running at http://localhost:3000/");
     });
   } catch (e) {
     console.log(`DB Error : ${e.message}`);
@@ -29,7 +29,11 @@ initilizeDBAndServer();
 
 app.get("/players/", async (request, response) => {
   const getPlayersDetailsQuary = `
-    SELECT * FROM player_details ;
+    SELECT 
+        player_id AS playerId,
+        player_name AS playerName
+    FROM 
+        player_details ;
     `;
   const playersDetails = await db.all(getPlayersDetailsQuary);
   response.send(playersDetails);
@@ -40,7 +44,13 @@ app.get("/players/", async (request, response) => {
 app.get("/players/:playerId/", async (request, response) => {
   const { playerId } = request.params;
   const getPlayerDetailsQuary = `
-    SELECT * FROM player_details WHERE player_id = ${playerId};
+    SELECT 
+        player_id AS playerId,
+        player_name AS playerName
+    FROM 
+        player_details 
+    WHERE 
+        player_id = ${playerId};
     `;
   const playerDetails = await db.get(getPlayerDetailsQuary);
   response.send(playerDetails);
@@ -68,7 +78,14 @@ app.put("/players/:playerId/", async (request, response) => {
 app.get("/matches/:matchId/", async (request, response) => {
   const { matchId } = request.params;
   const getMatchDetailsQuary = `
-    SELECT * FROM match_details WHERE player_id = ${matchId};
+    SELECT 
+        match_id AS matchId,
+        match,
+        year
+    FROM 
+        match_details 
+    WHERE 
+        match_id = ${matchId};
     `;
   const matchDetails = await db.get(getMatchDetailsQuary);
   response.send(matchDetails);
@@ -84,7 +101,7 @@ app.get("/players/:playerId/matches", async (request, response) => {
         match,
         year
     FROM player_match_score
-        NATURAL JOIN player_details
+        NATURAL JOIN match_details
     WHERE
          player_id = ${playerId}
     `;
@@ -118,13 +135,13 @@ app.get("/players/:playerId/playerScores", async (request, response) => {
         player_id AS playerId,
         player_name AS playerName,
         SUM(score) AS totalScore,
-        COUNT(fours) AS totalFours,
-        COUNT(sixes) AS totalSixes
-    FROM player_details
-            NATURAL JOIN player_match_score
+        SUM(fours) AS totalFours,
+        SUM(sixes) AS totalSixes
+    FROM player_match_score 
+            NATURAL JOIN player_details
     WHERE 
         player_id = ${playerId};
     `;
-  const PlayerScore = await db.all(getPlayerScoreQuary);
+  const PlayerScore = await db.get(getPlayerScoreQuary);
   response.send(PlayerScore);
 });
